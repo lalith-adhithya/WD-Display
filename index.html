@@ -286,7 +286,7 @@
 </head>
 <body>
 
-  <audio id="bgMusic" src="music.mp3" loop preload="auto"></audio>
+  <audio id="bgMusic" loop preload="auto"></audio>
 
 <!-- Background images -->
 <div class="bg" id="bg">
@@ -464,13 +464,34 @@ function loadQuote() {
 loadQuote();
 
 // ── BACKGROUND MUSIC ─────────────────────────────────────────────────────────
-const bgMusic = document.getElementById('bgMusic');
-bgMusic.volume = 0.2; // 20% volume — adjust between 0.0 and 1.0
+const MUSIC_TRACKS = [
+  "https://f003.backblazeb2.com/file/warpdrive-music/music.mp3",
+  "https://f003.backblazeb2.com/file/warpdrive-music/videoplayback.mp4",
+  ""
+  
+  // add more tracks here
+];
 
-bgMusic.play().catch(() => {
-  // If autoplay blocked, wait for any interaction
-  document.addEventListener('click', () => bgMusic.play(), { once: true });
+let currentTrack = 0;
+const bgMusic = document.getElementById('bgMusic');
+bgMusic.volume = 0.2;
+
+function loadTrack(index) {
+  bgMusic.src = MUSIC_TRACKS[index];
+  bgMusic.load();
+  bgMusic.play().catch(() => {
+    document.addEventListener('click', () => bgMusic.play(), { once: true });
+  });
+}
+
+// When track ends, play next one
+bgMusic.addEventListener('ended', () => {
+  currentTrack = (currentTrack + 1) % MUSIC_TRACKS.length;
+  loadTrack(currentTrack);
 });
+
+// Start playing first track
+loadTrack(currentTrack);
 
 // ── BACKGROUND SLIDESHOW ─────────────────────────────────────────────────────
 let bgIndex = 0;
