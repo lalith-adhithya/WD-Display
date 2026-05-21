@@ -465,38 +465,49 @@ loadQuote();
 
 // ── BACKGROUND MUSIC ─────────────────────────────────────────────────────────
 const MUSIC_TRACKS = [
- "https://rsdcqxublryecywfkwgz.supabase.co/storage/v1/object/public/BG-music/music.mp3",
-  // add more tracks here
+  "https://xxxx.supabase.co/storage/v1/object/public/music/vivaldi.mp3"
 ];
 
 let currentTrack = 0;
 const bgMusic = document.getElementById('bgMusic');
 bgMusic.volume = 0.2;
+let autoplayInterval = null;
 
 function loadTrack(index) {
   if (!MUSIC_TRACKS || !MUSIC_TRACKS[index]) return;
   bgMusic.src = MUSIC_TRACKS[index];
   bgMusic.load();
-
-  const playPromise = bgMusic.play();
-  if (playPromise !== undefined) {
-    playPromise.catch(err => {
-      console.warn('Autoplay blocked, waiting for interaction:', err);
-      document.addEventListener('click', () => {
-        if (bgMusic.src) bgMusic.play();
-      }, { once: true });
-    });
-  }
+  bgMusic.play().then(() => {
+    // Autoplay succeeded — stop retrying
+    if (autoplayInterval) {
+      clearInterval(autoplayInterval);
+      autoplayInterval = null;
+    }
+  }).catch(() => {
+    // Autoplay blocked — keep retrying silently
+  });
 }
 
-// When track ends, play next one
+// When track ends play next one
 bgMusic.addEventListener('ended', () => {
   currentTrack = (currentTrack + 1) % MUSIC_TRACKS.length;
   loadTrack(currentTrack);
 });
 
-// Start playing first track
+// Allow manual trigger on any interaction
+document.addEventListener('click', () => {
+  if (bgMusic.paused && bgMusic.src) bgMusic.play();
+});
+
+// Start — retry every 3 seconds until autoplay succeeds
 loadTrack(currentTrack);
+autoplayInterval = setInterval(() => {
+  if (bgMusic.paused) loadTrack(currentTrack);
+  else {
+    clearInterval(autoplayInterval);
+    autoplayInterval = null;
+  }
+}, 3000);
 
 // ── BACKGROUND SLIDESHOW ─────────────────────────────────────────────────────
 let bgIndex = 0;
