@@ -465,33 +465,46 @@ loadQuote();
 
 // ── BACKGROUND MUSIC ─────────────────────────────────────────────────────────
 const MUSIC_TRACKS = [
-  "https://rsdcqxublryecywfkwgz.supabase.co/storage/v1/object/public/BG-music/music.mp3"
+  "https://rsdcqxublryecywfkwgz.supabase.co/storage/v1/object/public/BG-music/music.mp3",
+  "https://rsdcqxublryecywfkwgz.supabase.co/storage/v1/object/public/BG-music/jazz_1.mp3",
+  "https://rsdcqxublryecywfkwgz.supabase.co/storage/v1/object/public/BG-music/jazz_2.mp3",
+  "https://rsdcqxublryecywfkwgz.supabase.co/storage/v1/object/public/BG-music/jazz_3.mp3",
+  "https://rsdcqxublryecywfkwgz.supabase.co/storage/v1/object/public/BG-music/jazz_4.mp3"
+  // add more tracks here
 ];
 
-let currentTrack = 0;
+let lastTrack = -1;
+let autoplayInterval = null;
 const bgMusic = document.getElementById('bgMusic');
 bgMusic.volume = 0.2;
-let autoplayInterval = null;
+
+function getRandomTrack() {
+  if (MUSIC_TRACKS.length === 1) return 0;
+  let next;
+  do {
+    next = Math.floor(Math.random() * MUSIC_TRACKS.length);
+  } while (next === lastTrack); // never repeat last track
+  return next;
+}
 
 function loadTrack(index) {
   if (!MUSIC_TRACKS || !MUSIC_TRACKS[index]) return;
+  lastTrack = index;
   bgMusic.src = MUSIC_TRACKS[index];
   bgMusic.load();
   bgMusic.play().then(() => {
-    // Autoplay succeeded — stop retrying
     if (autoplayInterval) {
       clearInterval(autoplayInterval);
       autoplayInterval = null;
     }
   }).catch(() => {
-    // Autoplay blocked — keep retrying silently
+    // autoplay blocked — retry loop will handle it
   });
 }
 
-// When track ends play next one
+// When track ends, play a new random one
 bgMusic.addEventListener('ended', () => {
-  currentTrack = (currentTrack + 1) % MUSIC_TRACKS.length;
-  loadTrack(currentTrack);
+  loadTrack(getRandomTrack());
 });
 
 // Allow manual trigger on any interaction
@@ -499,10 +512,12 @@ document.addEventListener('click', () => {
   if (bgMusic.paused && bgMusic.src) bgMusic.play();
 });
 
-// Start — retry every 3 seconds until autoplay succeeds
-loadTrack(currentTrack);
+// Start on a random track
+loadTrack(getRandomTrack());
+
+// Retry every 3 seconds if autoplay blocked
 autoplayInterval = setInterval(() => {
-  if (bgMusic.paused) loadTrack(currentTrack);
+  if (bgMusic.paused) loadTrack(getRandomTrack());
   else {
     clearInterval(autoplayInterval);
     autoplayInterval = null;
